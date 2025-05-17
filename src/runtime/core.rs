@@ -7,7 +7,6 @@ use std::{
     }
 };
 use super::waker::{ArcWake, waker_ref};
-// use futures::task::{ArcWake, waker_ref};
 
 
 pub struct Executor {
@@ -56,6 +55,22 @@ impl Executor {
                 if future.as_mut().poll(&mut context).is_pending() {
                     *task.future.lock().unwrap() = Some(future);
                 }
+
+                // At the end of the scope we have the following:
+                // - strong count of Arc<Task> = 2 (task + clone of the waker inside poll method)
+                // - task drops => -1 = 1
+                // - waker drops => -1 = 0 (even though the waker creation doesn't contain calls to Arc::from_raw(ptr),
+                //   dropping which will cause a strong ref count decreasing,
+                //   BUT instead i have implemented RawWakerExtended::drop() method, which is automatically called on drop of the `waker` here.
+                //   And the `RawWakerExtended::drop()` implementation contains temporary recreation of the Arc from the pointer to Arc<Task>, which
+                //   is dropped later => leading to decreasing of the strong ref count.
+                // 
+                // This can be validated by: 
+                //   1. commenting out the Arc::from_raw(ptr) in RawWakerExtended::drop()
+                // OR
+                //   2. wrapping Waker during it's creation inside ManuallyDrop()  
+                // OR
+                //   3. if additional cloning is accepted, use Arc::clone() + Arc::into_raw() instead of  Arc::as_ptr() in the waker_ref()
             }
         }
     }

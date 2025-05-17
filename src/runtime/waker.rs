@@ -40,7 +40,6 @@ impl RawWakerExtended {
     }
 }
 
-
 fn waker_vtable<T: ArcWake>() -> &'static RawWakerVTable {
     &RawWakerVTable::new(
         RawWakerExtended::clone::<T>, 
@@ -51,7 +50,7 @@ fn waker_vtable<T: ArcWake>() -> &'static RawWakerVTable {
 }
 
 pub fn waker_ref<T: ArcWake>(arc_waker: &Arc<T>) -> Waker {
-    let ptr = Arc::as_ptr(&arc_waker) as *const ();
+    let ptr = Arc::as_ptr(arc_waker) as *const ();
 
     // if uncomment this will work
 

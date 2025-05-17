@@ -13,4 +13,6 @@ fn main() {
     std::mem::drop(spawner);  // dropping tx half
 
     executor.run();
+
+    // std::thread::sleep(std::time::Duration::from_secs(2));
 }
